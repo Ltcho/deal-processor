@@ -18,11 +18,32 @@
         .stat-item { text-align: center; }
         .stat-value { font-size: 2em; font-weight: 700; color: #2a5298; }
         .stat-label { color: #6B7280; font-size: 0.9em; margin-top: 5px; }
+        .input-mode-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 12px; overflow: hidden; border: 2px solid #E5E7EB; width: fit-content; }
+        .input-mode-tab { padding: 12px 24px; border: none; background: #F9FAFB; color: #6B7280; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.95em; display: flex; align-items: center; gap: 8px; }
+        .input-mode-tab:first-child { border-right: 1px solid #E5E7EB; }
+        .input-mode-tab.active { background: #2a5298; color: white; }
+        .input-mode-tab:hover:not(.active) { background: #E5E7EB; }
         .text-input-area { margin-bottom: 30px; }
         .section-title { color: #1A1A1A; margin-bottom: 15px; font-size: 1.3em; font-weight: 600; display: flex; align-items: center; gap: 10px; }
         .section-title::before { content: ''; display: inline-block; width: 4px; height: 24px; background: #2a5298; border-radius: 2px; }
         textarea { width: 100%; min-height: 250px; padding: 20px; border: 2px solid #E5E7EB; border-radius: 12px; font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace; font-size: 14px; resize: vertical; transition: all 0.3s ease; background: #FAFAFA; }
         textarea:focus { outline: none; border-color: #2a5298; background: #FFFFFF; box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1); }
+        .upload-area { margin-bottom: 30px; display: none; }
+        .upload-zone { border: 2px dashed #E5E7EB; border-radius: 12px; padding: 60px 40px; text-align: center; transition: all 0.3s ease; background: #FAFAFA; cursor: pointer; }
+        .upload-zone:hover { border-color: #2a5298; background: rgba(42, 82, 152, 0.02); }
+        .upload-zone.dragover { border-color: #2a5298; background: rgba(42, 82, 152, 0.05); transform: scale(1.01); }
+        .upload-zone-icon { font-size: 3em; margin-bottom: 15px; opacity: 0.7; }
+        .upload-zone-text { color: #6B7280; font-size: 1.1em; margin-bottom: 10px; }
+        .upload-zone-subtext { color: #9CA3AF; font-size: 0.9em; }
+        .upload-zone input[type="file"] { display: none; }
+        .uploaded-file { display: none; align-items: center; gap: 15px; padding: 15px 20px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; margin-top: 15px; }
+        .uploaded-file.show { display: flex; }
+        .uploaded-file-icon { font-size: 1.5em; }
+        .uploaded-file-info { flex: 1; }
+        .uploaded-file-name { font-weight: 600; color: #059669; }
+        .uploaded-file-size { font-size: 0.85em; color: #6B7280; }
+        .uploaded-file-remove { background: none; border: none; color: #6B7280; cursor: pointer; padding: 5px; font-size: 1.2em; transition: color 0.2s; }
+        .uploaded-file-remove:hover { color: #DC2626; }
         .button-group { display: flex; gap: 15px; margin-bottom: 30px; }
         button { padding: 14px 32px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 1em; display: flex; align-items: center; gap: 8px; }
         .process-btn { background: #2a5298; color: white; flex: 1; justify-content: center; }
@@ -91,7 +112,7 @@
             <div class="stat-item"><div class="stat-value" id="monthCount">0</div><div class="stat-label">Months</div></div>
         </div>
         
-        <div class="instructions">
+        <div class="instructions" id="pasteInstructions">
             <h3>✈️ How It Works</h3>
             <ul>
                 <li>Paste dates into space below</li>
@@ -113,9 +134,49 @@
             </div>
         </div>
         
-        <div class="text-input-area">
+        <div class="instructions" id="uploadInstructions" style="display: none;">
+            <h3>📤 Upload CSV</h3>
+            <ul>
+                <li>Upload a CSV file in the same format this tool exports</li>
+                <li>Expected columns: To, From, Alt Origins, then month columns (e.g., "Jan 2025 D", "Jan 2025 R")</li>
+                <li>The tool will analyze all routes and calculate departure/return/set counts</li>
+                <li>Routes highlighted in red have low availability (&lt; 20 dates for any metric)</li>
+                <li>Uncheck the "Include" box to remove routes from the downloaded sheet</li>
+            </ul>
+        </div>
+        
+        <div class="input-mode-tabs">
+            <button class="input-mode-tab active" id="pasteTab" onclick="switchInputMode('paste')">
+                <span>📝</span>
+                <span>Paste Data</span>
+            </button>
+            <button class="input-mode-tab" id="uploadTab" onclick="switchInputMode('upload')">
+                <span>📤</span>
+                <span>Upload CSV</span>
+            </button>
+        </div>
+        
+        <div class="text-input-area" id="textInputArea">
             <h3 class="section-title">Enter Route Availability Data</h3>
             <textarea id="routeData" placeholder="Enter route data here..."></textarea>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <h3 class="section-title">Upload CSV File</h3>
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="csvFileInput" accept=".csv">
+                <div class="upload-zone-icon">📁</div>
+                <div class="upload-zone-text">Drop your CSV file here or click to browse</div>
+                <div class="upload-zone-subtext">Accepts .csv files exported from this tool</div>
+            </div>
+            <div class="uploaded-file" id="uploadedFile">
+                <span class="uploaded-file-icon">📄</span>
+                <div class="uploaded-file-info">
+                    <div class="uploaded-file-name" id="uploadedFileName"></div>
+                    <div class="uploaded-file-size" id="uploadedFileSize"></div>
+                </div>
+                <button class="uploaded-file-remove" onclick="removeUploadedFile()" title="Remove file">✕</button>
+            </div>
         </div>
         
         <div class="button-group">
@@ -145,6 +206,8 @@
         let processedData = null;
         let routeAnalytics = {};
         let excludedRoutes = new Set();
+        let currentInputMode = 'paste';
+        let uploadedCSVData = null;
         
         const now = new Date();
         const currentMonth = now.getUTCMonth() + 1;
@@ -164,21 +227,78 @@
         
         const templateColumns = generateMonthColumns();
         
+        // Input mode switching
+        function switchInputMode(mode) {
+            currentInputMode = mode;
+            document.getElementById('pasteTab').classList.toggle('active', mode === 'paste');
+            document.getElementById('uploadTab').classList.toggle('active', mode === 'upload');
+            document.getElementById('textInputArea').style.display = mode === 'paste' ? 'block' : 'none';
+            document.getElementById('uploadArea').style.display = mode === 'upload' ? 'block' : 'none';
+            document.getElementById('pasteInstructions').style.display = mode === 'paste' ? 'block' : 'none';
+            document.getElementById('uploadInstructions').style.display = mode === 'upload' ? 'block' : 'none';
+        }
+        
+        // File upload handling
+        const uploadZone = document.getElementById('uploadZone');
+        const csvFileInput = document.getElementById('csvFileInput');
+        
+        uploadZone.addEventListener('click', () => csvFileInput.click());
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFileUpload(files[0]);
+        });
+        
+        csvFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFileUpload(e.target.files[0]);
+        });
+        
+        function handleFileUpload(file) {
+            if (!file.name.endsWith('.csv')) {
+                showStatus('Please upload a CSV file', 'error');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedCSVData = e.target.result;
+                document.getElementById('uploadedFileName').textContent = file.name;
+                document.getElementById('uploadedFileSize').textContent = formatFileSize(file.size);
+                document.getElementById('uploadedFile').classList.add('show');
+                showStatus('File "' + file.name + '" loaded successfully', 'success');
+            };
+            reader.readAsText(file);
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' bytes';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        }
+        
+        function removeUploadedFile() {
+            uploadedCSVData = null;
+            csvFileInput.value = '';
+            document.getElementById('uploadedFile').classList.remove('show');
+            showStatus('File removed', 'info');
+        }
+        
         function parseMonth(monthStr) {
-            // Handle both full month names and abbreviations
             const monthMap = {
-                'january': 1, 'jan': 1,
-                'february': 2, 'feb': 2,
-                'march': 3, 'mar': 3,
-                'april': 4, 'apr': 4,
-                'may': 5,
-                'june': 6, 'jun': 6,
-                'july': 7, 'jul': 7,
-                'august': 8, 'aug': 8,
-                'september': 9, 'sep': 9, 'sept': 9,
-                'october': 10, 'oct': 10,
-                'november': 11, 'nov': 11,
-                'december': 12, 'dec': 12
+                'january': 1, 'jan': 1, 'february': 2, 'feb': 2, 'march': 3, 'mar': 3,
+                'april': 4, 'apr': 4, 'may': 5, 'june': 6, 'jun': 6, 'july': 7, 'jul': 7,
+                'august': 8, 'aug': 8, 'september': 9, 'sep': 9, 'sept': 9,
+                'october': 10, 'oct': 10, 'november': 11, 'nov': 11, 'december': 12, 'dec': 12
             };
             const cleaned = monthStr.toLowerCase().replace(/[.,]/g, '').trim();
             return monthMap[cleaned] || 0;
@@ -187,11 +307,8 @@
         function getYearForMonth(monthNum) {
             const currentMonthNum = now.getUTCMonth() + 1;
             const currentYearNum = now.getUTCFullYear();
-            // If month is same as current, it's this year
             if (monthNum === currentMonthNum) return currentYearNum;
-            // If month is after current month, it's this year
             if (monthNum > currentMonthNum) return currentYearNum;
-            // If month is before current month, it's next year
             return currentYearNum + 1;
         }
         
@@ -201,11 +318,14 @@
         
         function parseRouteDates(dateStr) {
             const dates = [];
+            if (!dateStr || typeof dateStr !== 'string') return dates;
             dateStr.split(',').forEach(part => {
                 part = part.trim();
                 if (part.includes('-')) {
                     const [start, end] = part.split('-').map(d => parseInt(d.trim()));
-                    for (let i = start; i <= end && i <= 31; i++) dates.push(i);
+                    if (!isNaN(start) && !isNaN(end)) {
+                        for (let i = start; i <= end && i <= 31; i++) dates.push(i);
+                    }
                 } else {
                     const date = parseInt(part);
                     if (!isNaN(date)) dates.push(date);
@@ -216,10 +336,14 @@
         
         function findValidSets(departures, returns) {
             let setCount = 0;
-            departures.forEach(dep => {
-                returns.forEach(ret => {
-                    const diff = ret - dep;
-                    if (diff >= 5 && diff <= 10) setCount++;
+            Object.keys(departures).forEach(month => {
+                const depDates = departures[month] || [];
+                const retDates = returns[month] || [];
+                depDates.forEach(dep => {
+                    retDates.forEach(ret => {
+                        const diff = ret - dep;
+                        if (diff >= 5 && diff <= 10) setCount++;
+                    });
                 });
             });
             return setCount;
@@ -228,6 +352,98 @@
         const usAirports = ['JFK', 'LAX', 'ORD', 'ATL', 'DFW', 'SEA', 'SFO', 'MIA', 'BOS', 'EWR', 'IAD', 'PHX', 'IAH', 'DTW', 'MSP', 'LAS', 'PHL', 'CLT', 'DEN', 'SAN', 'DCA', 'TPA', 'PDX', 'STL', 'BNA', 'AUS', 'SLC', 'MCI', 'RDU', 'CLE', 'PIT', 'ABE', 'ABQ', 'AGS', 'ATW', 'ANC', 'FAI', 'HNL', 'JNU', 'SIT', 'MCO', 'FLL', 'RSW', 'PBI', 'TUS', 'OAK', 'SJC', 'SMF', 'ONT', 'BUR', 'SJU', 'GUM', 'STT', 'STX', 'PPG', 'SPN', 'BQN', 'PSE', 'VQS', 'BWI', 'MDW', 'DAL', 'HOU', 'OGG', 'KOA', 'LIH', 'ITO', 'SAT', 'MSY', 'CMH', 'CVG', 'IND', 'MKE', 'BDL', 'PVD', 'JAX', 'ORF', 'RIC', 'GSO', 'MEM', 'BUF', 'ALB', 'SYR', 'ROC', 'ELP', 'TUL', 'OKC', 'ICT', 'DSM', 'GRR', 'FSD', 'FAR', 'BIS', 'RAP', 'BOI', 'GEG', 'MSO', 'BIL', 'AMA', 'LBB', 'MAF', 'CRP', 'BRO', 'HRL', 'SAV', 'CHS', 'CAE', 'GSP', 'TYS', 'CHA', 'HSV', 'BHM', 'MOB', 'PNS', 'TLH', 'PIE', 'SRQ', 'PGD', 'MLB', 'DAB', 'GNV', 'VPS', 'EYW', 'LGB', 'SBA', 'FAT', 'MRY', 'RNO', 'EUG', 'MFR', 'RDM', 'PSC', 'YKM', 'BLI', 'PAE', 'ALW', 'PUW', 'LWS', 'IDA', 'FCA', 'BZN', 'HLN', 'GTF', 'CPR', 'CYS', 'JAC', 'SHR', 'GJT', 'DUR', 'ASE', 'EGE', 'MTJ', 'COS', 'PUB', 'SGU', 'CDC', 'PSP', 'SMX', 'SBP', 'MCE', 'MOD', 'SCK', 'CIC', 'RDD', 'ACV', 'CRQ', 'TVC'];
         
         function processData() {
+            if (currentInputMode === 'upload') {
+                processCSVUpload();
+            } else {
+                processTextInput();
+            }
+        }
+        
+        function processCSVUpload() {
+            if (!uploadedCSVData) {
+                showStatus('Please upload a CSV file first', 'error');
+                return;
+            }
+            
+            const parsed = Papa.parse(uploadedCSVData, { header: true, skipEmptyLines: true });
+            
+            if (parsed.errors.length > 0) {
+                showStatus('Error parsing CSV file. Please check the format.', 'error');
+                return;
+            }
+            
+            const rows = parsed.data;
+            if (rows.length === 0) {
+                showStatus('CSV file is empty', 'error');
+                return;
+            }
+            
+            const headers = Object.keys(rows[0]);
+            if (!headers.includes('To') || !headers.includes('From')) {
+                showStatus('CSV must have "To" and "From" columns', 'error');
+                return;
+            }
+            
+            processedData = [];
+            routeAnalytics = {};
+            
+            const monthColumnPattern = /^([A-Za-z]+\s+\d{4})\s+([DR])$/;
+            
+            rows.forEach(row => {
+                const toAirport = (row['To'] || '').trim();
+                const fromAirport = (row['From'] || '').trim();
+                if (!toAirport || !fromAirport) return;
+                
+                const routeKey = fromAirport + '-' + toAirport;
+                const routeData = { 'To': toAirport, 'From': fromAirport, 'Alt Origins': row['Alt Origins'] || '' };
+                
+                templateColumns.forEach(col => { routeData[col + ' D'] = ''; routeData[col + ' R'] = ''; });
+                
+                routeAnalytics[routeKey] = { departures: {}, returns: {}, totalDepartures: 0, totalReturns: 0, sets: 0 };
+                
+                headers.forEach(header => {
+                    const match = header.match(monthColumnPattern);
+                    if (match) {
+                        const monthYear = match[1];
+                        const type = match[2];
+                        const dates = (row[header] || '').trim();
+                        
+                        if (dates) {
+                            routeData[header] = dates;
+                            const parsedDates = parseRouteDates(dates);
+                            
+                            if (type === 'D') {
+                                routeAnalytics[routeKey].departures[monthYear] = parsedDates;
+                                routeAnalytics[routeKey].totalDepartures += parsedDates.length;
+                            } else {
+                                routeAnalytics[routeKey].returns[monthYear] = parsedDates;
+                                routeAnalytics[routeKey].totalReturns += parsedDates.length;
+                            }
+                        }
+                    }
+                });
+                
+                processedData.push(routeData);
+            });
+            
+            Object.keys(routeAnalytics).forEach(route => {
+                routeAnalytics[route].sets = findValidSets(routeAnalytics[route].departures, routeAnalytics[route].returns);
+            });
+            
+            if (processedData.length === 0) {
+                showStatus('No valid routes found in CSV', 'error');
+                return;
+            }
+            
+            excludedRoutes.clear();
+            updateStats();
+            displayAnalytics();
+            displayPreview();
+            document.getElementById('downloadBtn').disabled = false;
+            showStatus('Processed ' + processedData.length + ' routes from CSV successfully!', 'success');
+        }
+        
+        function processTextInput() {
             const routeText = document.getElementById('routeData').value;
             if (!routeText.trim()) { showStatus('Please enter route data to process', 'error'); return; }
             
@@ -237,7 +453,6 @@
             const lines = routeText.split('\n');
             
             lines.forEach(line => {
-                // Strip leading bullets, asterisks, dashes, numbers, whitespace
                 line = line.trim().replace(/^[\s*\-•·◦▪▸►>\d.)\]]+\s*/, '');
                 if (!line) return;
                 
@@ -284,19 +499,17 @@
                     routeAnalytics[routeKey] = { departures: {}, returns: {}, totalDepartures: 0, totalReturns: 0, sets: 0 };
                 }
                 
-                // Updated regex to handle full month names (e.g., "June", "July") and abbreviations
                 const monthGroups = datesStr.split(';');
                 monthGroups.forEach(group => {
                     group = group.trim();
                     if (!group) return;
                     
-                    // Match month name (3+ letters) followed by dates
                     const monthMatch = group.match(/^([A-Za-z]{3,})\.?\s+(.+)$/i);
                     if (!monthMatch) return;
                     
                     const [__, monthStr, dates] = monthMatch;
                     const monthNum = parseMonth(monthStr);
-                    if (monthNum === 0) return; // Invalid month
+                    if (monthNum === 0) return;
                     
                     let year = getYearForMonth(monthNum);
                     const monthName = getMonthName(monthNum);
@@ -335,12 +548,7 @@
             processedData = Array.from(routeMap.values());
             
             Object.keys(routeAnalytics).forEach(route => {
-                const analytics = routeAnalytics[route];
-                Object.keys(analytics.departures).forEach(month => {
-                    const depDates = analytics.departures[month] || [];
-                    const retDates = analytics.returns[month] || [];
-                    analytics.sets += findValidSets(depDates, retDates);
-                });
+                routeAnalytics[route].sets = findValidSets(routeAnalytics[route].departures, routeAnalytics[route].returns);
             });
             
             if (processedData.length === 0) { showStatus('No valid routes found.', 'error'); return; }
@@ -447,6 +655,9 @@
             processedData = null;
             routeAnalytics = {};
             excludedRoutes.clear();
+            uploadedCSVData = null;
+            csvFileInput.value = '';
+            document.getElementById('uploadedFile').classList.remove('show');
             showStatus('Data cleared', 'info');
         }
         
