@@ -156,6 +156,30 @@
         .example-format strong { color: #B7E8FF; display: block; margin-bottom: 10px; }
         .empty-state { text-align: center; padding: 60px 20px; color: #601124; }
         .empty-state-icon { font-size: 3em; margin-bottom: 20px; opacity: 0.5; }
+
+        /* Connecting Cities */
+        .cc-section { margin: 30px 0; padding: 24px; background: rgba(0, 68, 73, 0.03); border-radius: 12px; border: 1px solid rgba(0, 68, 73, 0.12); display: none; }
+        .cc-title { font-size: 1.3em; font-weight: 600; color: #004449; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        .cc-airline-select { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .cc-airline-btn { padding: 10px 20px; border: 2px solid #601124; border-radius: 100px; background: #FFFBED; color: #004449; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.9em; }
+        .cc-airline-btn.active { background: #FFA97F; color: #FFFBED; border-color: #FFA97F; }
+        .cc-airline-btn:hover:not(.active) { background: rgba(0, 68, 73, 0.08); }
+        .cc-grid-container { max-height: 500px; overflow: auto; border: 1px solid rgba(0, 68, 73, 0.12); border-radius: 8px; background: #FFFFFF; }
+        .cc-grid { width: 100%; border-collapse: collapse; font-size: 13px; }
+        .cc-grid th { background: #004449; color: #FFFBED; padding: 10px 8px; position: sticky; top: 0; z-index: 10; font-size: 12px; white-space: nowrap; text-align: center; }
+        .cc-grid th.cc-airport-header { min-width: 50px; }
+        .cc-grid th.cc-route-header { min-width: 80px; text-align: left; padding-left: 12px; }
+        .cc-grid td { padding: 6px 8px; border-bottom: 1px solid rgba(0, 68, 73, 0.08); text-align: center; }
+        .cc-grid td:first-child { text-align: left; font-weight: 600; font-family: 'SF Mono', 'Monaco', monospace; color: #004449; padding-left: 12px; }
+        .cc-grid tr:hover { background: rgba(0, 68, 73, 0.03); }
+        .cc-grid input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #004449; }
+        .cc-actions { display: flex; gap: 15px; margin-top: 20px; flex-wrap: wrap; }
+        .cc-action-btn { padding: 12px 24px; border: none; border-radius: 100px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.95em; display: flex; align-items: center; gap: 8px; }
+        .cc-add-btn { background: #483CFF; color: #FFFFFF; }
+        .cc-add-btn:hover { background: #3a30cc; }
+        .cc-new-csv-btn { background: #D4FFBF; color: #004449; }
+        .cc-new-csv-btn:hover { background: #b8f5a0; }
+        .cc-select-all { font-size: 0.85em; color: #483CFF; cursor: pointer; text-decoration: underline; margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -300,6 +324,28 @@
                 </div>
             </div>
             <div id="preview" class="preview-area"></div>
+
+        <!-- Connecting Cities Section -->
+        <div id="ccSection" class="cc-section">
+            <div class="cc-title">🔗 Connecting Cities</div>
+            <div class="cc-airline-select">
+                <button class="cc-airline-btn" onclick="selectAirline('American')">American</button>
+                <button class="cc-airline-btn" onclick="selectAirline('Alaska')">Alaska</button>
+                <button class="cc-airline-btn" onclick="selectAirline('United')">United</button>
+                <button class="cc-airline-btn" onclick="selectAirline('Delta')">Delta</button>
+            </div>
+            <div id="ccGridContainer" class="cc-grid-container" style="display:none;"></div>
+            <div id="ccActions" class="cc-actions" style="display:none;">
+                <button class="cc-action-btn cc-add-btn" onclick="addConnectingToAltOrigins()">Add to Alt Origins in CSV</button>
+                <button class="cc-action-btn cc-new-csv-btn" onclick="downloadConnectingCSV()">📥 Download Connecting CSV</button>
+                <button class="cc-action-btn" style="background:#B7E8FF;color:#004449;" onclick="downloadEmptyGridCSV()">📥 Download Empty Grid</button>
+            </div>
+            <div id="automationPanel" style="margin-top:20px;display:none;">
+                <div style="font-size:1.1em;font-weight:600;color:#004449;margin-bottom:12px;display:flex;align-items:center;gap:8px;">🤖 AwardTool Automation</div>
+                <div id="automationStatus" style="margin-bottom:12px;"></div>
+                <div id="automationProgress" style="margin-bottom:12px;"></div>
+                <div id="automationLog" style="max-height:300px;overflow-y:auto;border:1px solid rgba(0,68,73,0.12);border-radius:8px;background:#FFFFFF;"></div>
+            </div>
         </div>
     </div>
     
@@ -311,6 +357,13 @@
     
     const IATA_COUNTRY = {"TIA": "Albania", "VIE": "Austria", "SZG": "Austria", "INN": "Austria", "GRZ": "Austria", "LNZ": "Austria", "MSQ": "Belarus", "BRU": "Belgium", "ANR": "Belgium", "CRL": "Belgium", "LGG": "Belgium", "SJJ": "Bosnia & Herzegovina", "SOF": "Bulgaria", "BOJ": "Bulgaria", "VAR": "Bulgaria", "ZAG": "Croatia", "SPU": "Croatia", "DBV": "Croatia", "PUY": "Croatia", "RJK": "Croatia", "LCA": "Cyprus", "PFO": "Cyprus", "PRG": "Czechia", "BRQ": "Czechia", "CPH": "Denmark", "BLL": "Denmark", "AAR": "Denmark", "TLL": "Estonia", "HEL": "Finland", "OUL": "Finland", "TMP": "Finland", "TKU": "Finland", "CDG": "France", "ORY": "France", "NCE": "France", "LYS": "France", "MRS": "France", "TLS": "France", "BOD": "France", "NTE": "France", "SXB": "France", "BIA": "France", "AJA": "France", "MPL": "France", "BER": "Germany", "TXL": "Germany", "SXF": "Germany", "FRA": "Germany", "MUC": "Germany", "DUS": "Germany", "HAM": "Germany", "STR": "Germany", "CGN": "Germany", "HAJ": "Germany", "NUE": "Germany", "LEJ": "Germany", "BRE": "Germany", "DTM": "Germany", "FMO": "Germany", "ATH": "Greece", "SKG": "Greece", "HER": "Greece", "RHO": "Greece", "CFU": "Greece", "CHQ": "Greece", "JTR": "Greece", "ZTH": "Greece", "KGS": "Greece", "JMK": "Greece", "BUD": "Hungary", "DEB": "Hungary", "KEF": "Iceland", "RKV": "Iceland", "DUB": "Ireland", "SNN": "Ireland", "ORK": "Ireland", "KNO": "Ireland", "FCO": "Italy", "MXP": "Italy", "VCE": "Italy", "NAP": "Italy", "BLQ": "Italy", "FLR": "Italy", "PSA": "Italy", "CTA": "Italy", "PMO": "Italy", "CAG": "Italy", "AHO": "Italy", "OLB": "Italy", "BRI": "Italy", "BGY": "Italy", "TRN": "Italy", "VRN": "Italy", "GOA": "Italy", "TRS": "Italy", "SUF": "Italy", "RIX": "Latvia", "VNO": "Lithuania", "KUN": "Lithuania", "LUX": "Luxembourg", "SKP": "North Macedonia", "AMS": "Netherlands", "EIN": "Netherlands", "RTM": "Netherlands", "OSL": "Norway", "BGO": "Norway", "TRD": "Norway", "SVG": "Norway", "TOS": "Norway", "WAW": "Poland", "KRK": "Poland", "WRO": "Poland", "GDN": "Poland", "KTW": "Poland", "POZ": "Poland", "LIS": "Portugal", "OPO": "Portugal", "FAO": "Portugal", "FNC": "Portugal", "PDL": "Portugal", "OTP": "Romania", "CLJ": "Romania", "TSR": "Romania", "IAS": "Romania", "SVO": "Russia", "DME": "Russia", "LED": "Russia", "VKO": "Russia", "BEG": "Serbia", "INI": "Serbia", "BTS": "Slovakia", "LJU": "Slovenia", "MAD": "Spain", "BCN": "Spain", "AGP": "Spain", "PMI": "Spain", "ALC": "Spain", "VLC": "Spain", "SVQ": "Spain", "BIO": "Spain", "IBZ": "Spain", "TFS": "Spain", "LPA": "Spain", "ACE": "Spain", "FUE": "Spain", "SCQ": "Spain", "OVD": "Spain", "ARN": "Sweden", "GOT": "Sweden", "MMX": "Sweden", "ZRH": "Switzerland", "GVA": "Switzerland", "BSL": "Switzerland", "BRN": "Switzerland", "IST": "Turkey", "SAW": "Turkey", "AYT": "Turkey", "ESB": "Turkey", "ADB": "Turkey", "DLM": "Turkey", "BJV": "Turkey", "KBP": "Ukraine", "IEV": "Ukraine", "LWO": "Ukraine", "ODS": "Ukraine", "LHR": "United Kingdom", "LGW": "United Kingdom", "STN": "United Kingdom", "LTN": "United Kingdom", "LCY": "United Kingdom", "MAN": "United Kingdom", "EDI": "United Kingdom", "BHX": "United Kingdom", "GLA": "United Kingdom", "BRS": "United Kingdom", "NCL": "United Kingdom", "LPL": "United Kingdom", "BFS": "United Kingdom", "ABZ": "United Kingdom", "CWL": "United Kingdom", "KBL": "Afghanistan", "DAC": "Bangladesh", "PBH": "Bhutan", "PNH": "Cambodia", "REP": "Cambodia", "SHV": "Cambodia", "PEK": "China", "PVG": "China", "CAN": "China", "CTU": "China", "SZX": "China", "HKG": "Hong Kong", "SHA": "China", "XIY": "China", "KMG": "China", "WUH": "China", "CKG": "China", "NKG": "China", "HGH": "China", "TSN": "China", "TAO": "China", "DEL": "India", "BOM": "India", "BLR": "India", "MAA": "India", "CCU": "India", "HYD": "India", "COK": "India", "AMD": "India", "GOI": "India", "JAI": "India", "CGK": "Indonesia", "DPS": "Indonesia", "SUB": "Indonesia", "JOG": "Indonesia", "NRT": "Japan", "HND": "Japan", "KIX": "Japan", "ITM": "Japan", "NGO": "Japan", "FUK": "Japan", "CTS": "Japan", "OKA": "Japan", "KOJ": "Japan", "ICN": "South Korea", "GMP": "South Korea", "PUS": "South Korea", "CJU": "South Korea", "KUL": "Malaysia", "PEN": "Malaysia", "BKI": "Malaysia", "LGK": "Malaysia", "RGN": "Myanmar", "MDL": "Myanmar", "KTM": "Nepal", "MNL": "Philippines", "CEB": "Philippines", "CRK": "Philippines", "SIN": "Singapore", "CMB": "Sri Lanka", "TPE": "Taiwan", "KHH": "Taiwan", "BKK": "Thailand", "DMK": "Thailand", "CNX": "Thailand", "HKT": "Thailand", "USM": "Thailand", "SGN": "Vietnam", "HAN": "Vietnam", "DAD": "Vietnam", "UBN": "Mongolia", "ULN": "Mongolia", "EVN": "Armenia", "GYD": "Azerbaijan", "BAH": "Bahrain", "TBS": "Georgia", "IKA": "Iran", "THR": "Iran", "TLV": "Israel", "AMM": "Jordan", "AQJ": "Jordan", "KWI": "Kuwait", "BEY": "Lebanon", "MCT": "Oman", "SLL": "Oman", "DOH": "Qatar", "RUH": "Saudi Arabia", "JED": "Saudi Arabia", "DMM": "Saudi Arabia", "AUH": "UAE", "DXB": "UAE", "SHJ": "UAE", "ISB": "Pakistan", "KHI": "Pakistan", "LHE": "Pakistan", "TAS": "Uzbekistan", "SKD": "Uzbekistan", "ALG": "Algeria", "CAI": "Egypt", "HRG": "Egypt", "HBE": "Egypt", "SSH": "Egypt", "ADD": "Ethiopia", "ACC": "Ghana", "NBO": "Kenya", "MBA": "Kenya", "CMN": "Morocco", "RAK": "Morocco", "FEZ": "Morocco", "AGA": "Morocco", "TNG": "Morocco", "LOS": "Nigeria", "ABV": "Nigeria", "KGL": "Rwanda", "DSS": "Senegal", "JNB": "South Africa", "CPT": "South Africa", "DUR": "South Africa", "DAR": "Tanzania", "JRO": "Tanzania", "ZNZ": "Tanzania", "TUN": "Tunisia", "EBB": "Uganda", "ANU": "Antigua & Barbuda", "AUA": "Aruba/Dutch Caribbean/Cura\u00e7ao", "BON": "Aruba/Dutch Caribbean/Cura\u00e7ao", "CUR": "Aruba/Dutch Caribbean/Cura\u00e7ao", "NAS": "Bahamas", "FPO": "Bahamas", "GHB": "Bahamas", "ELH": "Bahamas", "MHH": "Bahamas", "BGI": "Barbados", "BZE": "Belize", "GCM": "Cayman Islands", "PTY": "Panama", "DAV": "Panama", "SDQ": "Dominican Republic", "PUJ": "Dominican Republic", "STI": "Dominican Republic", "POP": "Dominican Republic", "SAL": "El Salvador", "GND": "Grenada", "GUA": "Guatemala", "PAP": "Haiti", "CAP": "Haiti", "SAP": "Honduras", "RTB": "Honduras", "TGU": "Honduras", "MBJ": "Jamaica", "KIN": "Jamaica", "SXM": "St. Maarten", "UVF": "St. Lucia", "SLU": "St. Lucia", "POS": "Trinidad & Tobago", "TAB": "Trinidad & Tobago", "PTP": "Guadeloupe", "FDF": "Martinique", "SKB": "St. Kitts and Nevis", "AXA": "Anguilla", "EIS": "British Virgin Islands", "SJU": "Puerto Rico", "CUN": "Mexico", "MEX": "Mexico", "GDL": "Mexico", "SJD": "Mexico", "PVR": "Mexico", "CZM": "Mexico", "MID": "Mexico", "MTY": "Mexico", "OAX": "Mexico", "ZIH": "Mexico", "ACA": "Mexico", "HUX": "Mexico", "BJX": "Mexico", "QRO": "Mexico", "LIR": "Costa Rica", "SJO": "Costa Rica", "MGA": "Nicaragua", "HAV": "Cuba", "VRA": "Cuba", "EZE": "Argentina", "AEP": "Argentina", "MDZ": "Argentina", "COR": "Argentina", "SLA": "Argentina", "BRC": "Argentina", "IGR": "Argentina", "LPB": "Bolivia", "VVI": "Bolivia", "GRU": "Brazil", "GIG": "Brazil", "BSB": "Brazil", "CNF": "Brazil", "SSA": "Brazil", "REC": "Brazil", "FOR": "Brazil", "POA": "Brazil", "CWB": "Brazil", "FLN": "Brazil", "SCL": "Chile", "IQQ": "Chile", "CCP": "Chile", "PMC": "Chile", "PUQ": "Chile", "BOG": "Colombia", "MDE": "Colombia", "CTG": "Colombia", "CLO": "Colombia", "BAQ": "Colombia", "UIO": "Ecuador", "GYE": "Ecuador", "GPS": "Ecuador", "ASU": "Paraguay", "LIM": "Peru", "CUZ": "Peru", "MVD": "Uruguay", "YYZ": "Canada", "YUL": "Canada", "YVR": "Canada", "YYC": "Canada", "YEG": "Canada", "YOW": "Canada", "YWG": "Canada", "YHZ": "Canada", "YQR": "Canada", "YXE": "Canada", "YQB": "Canada", "YSJ": "Canada", "YYG": "Canada", "YQY": "Canada", "YYT": "Canada", "YDF": "Canada", "SYD": "Australia", "MEL": "Australia", "BNE": "Australia", "PER": "Australia", "ADL": "Australia", "LST": "Australia", "HBA": "Australia", "DRW": "Australia", "CNS": "Australia", "AKL": "New Zealand", "CHC": "New Zealand", "WLG": "New Zealand", "ZQN": "New Zealand", "NAN": "Fiji", "SUV": "Fiji", "PPT": "French Polynesia", "APW": "Samoa"};
     
+
+    // ===== AIRLINE ROUTE DATA =====
+    const AIRLINE_ROUTES = {"American": ["ABE", "ABQ", "ALB", "ASE", "ATL", "ATW", "AUS", "AVL", "BDL", "BGR", "BHM", "BIL", "BMI", "BNA", "BOI", "BOS", "BTV", "BUF", "BWI", "BZN", "CAE", "CAK", "CID", "CMH", "CMI", "COS", "CVG", "DAY", "DEN", "DSM", "DTW", "ECP", "ELP", "EWR", "EYW", "FAR", "FAT", "FLL", "FSD", "FWA", "GEG", "GRB", "GRR", "GSO", "GSP", "HPN", "HSV", "IAD", "IAH", "ICT", "ILM", "IND", "ISP", "JAC", "JAN", "JAX", "JFK", "KOA", "LAS", "LAX", "LEX", "LGA", "LIT", "MCI", "MCO", "MDT", "MEM", "MFE", "MGM", "MHT", "MIA", "MKE", "MLI", "MOB", "MQT", "MSN", "MSO", "MSP", "MSY", "MTJ", "MYR", "OAK", "OKC", "OMA", "ONT", "ORF", "ORH", "PBI", "PDX", "PHL", "PHX", "PIA", "PIT", "PNS", "PSP", "PVD", "PWM", "RAP", "RDM", "RDU", "RIC", "RNO", "ROC", "RST", "RSW", "SAN", "SAT", "SAV", "SBA", "SDF", "SEA", "SFO", "SJC", "SJU", "SLC", "SMF", "SNA", "SRQ", "STL", "SYR", "TPA", "TUL", "TUS", "TVC", "VPS", "YUM"], "Alaska": ["ABQ", "ANC", "ATL", "AUS", "BIL", "BLI", "BNA", "BOI", "BOS", "BUR", "BWI", "BZN", "CHS", "CVG", "DAL", "DCA", "DEN", "DFW", "DTW", "ELP", "EUG", "EWR", "FAI", "FAT", "FCA", "FLL", "GEG", "GTF", "HLN", "HNL", "IAD", "IAH", "ICT", "IDA", "IND", "JFK", "JNU", "KOA", "LAX", "LIH", "MCI", "MCO", "MFR", "MKE", "MSO", "MSP", "MSY", "OAK", "OGG", "OKC", "OMA", "ONT", "ORD", "PAE", "PDX", "PHL", "PHX", "PIT", "PSC", "PSP", "RDD", "RDM", "RDU", "RNO", "RSW", "SAN", "SAT", "SBA", "SEA", "SFO", "SJC", "SLC", "SMF", "SNA", "STL", "STS", "SUN", "TPA", "TUS"], "United": ["ABQ", "ALB", "ANC", "ATL", "AUS", "BDL", "BHM", "BIL", "BNA", "BOI", "BOS", "BTV", "BUF", "BUR", "BWI", "BZN", "CHS", "CID", "CLE", "CLT", "CMH", "COS", "CVG", "DCA", "DEN", "DFW", "DSM", "DTW", "ECP", "EGE", "ELP", "EUG", "EWR", "FAI", "FAT", "FCA", "FLL", "FSD", "GEG", "GRR", "GSO", "GUM", "HNL", "HSV", "IAD", "IAH", "ICT", "ILM", "IND", "JAC", "JAX", "KOA", "LAS", "LAX", "LGA", "LIH", "MAF", "MCI", "MCO", "MDT", "MEM", "MFE", "MFR", "MHT", "MIA", "MKE", "MOB", "MSN", "MSO", "MSP", "MSY", "MTJ", "MYR", "OGG", "OKC", "OMA", "ONT", "ORD", "ORF", "PBI", "PDX", "PHL", "PHX", "PIT", "PNS", "PSP", "PVD", "PWM", "RAP", "RDD", "RDM", "RDU", "RIC", "RNO", "ROC", "RSW", "SAN", "SAT", "SAV", "SBA", "SDF", "SEA", "SFO", "SJC", "SJU", "SLC", "SMF", "SNA", "SRQ", "STL", "STT", "SYR", "TPA", "TUL", "TUS", "TVC", "TYS"], "Delta": ["ABE", "ABQ", "AEX", "AGS", "ALB", "AMA", "ANC", "ASE", "ATL", "ATW", "AUS", "AVL", "BDL", "BGR", "BHM", "BIL", "BMI", "BNA", "BOI", "BOS", "BTV", "BUF", "BUR", "BWI", "BZN", "CAE", "CHA", "CHO", "CHS", "CID", "CLE", "CLT", "CMH", "COD", "COS", "CRP", "CRW", "CVG", "CYS", "DAB", "DAL", "DAY", "DCA", "DEN", "DFW", "DLH", "DRO", "DSM", "DTW", "ECP", "EGE", "ELP", "EUG", "EVV", "EWN", "EWR", "EYW", "FAI", "FAR", "FAT", "FAY", "FCA", "FLL", "FSD", "FWA", "GEG", "GJT", "GPT", "GRB", "GRR", "GSO", "GSP", "GTF", "GTR", "GUM", "HHH", "HLN", "HNL", "HOU", "HPN", "HSV", "HVN", "IAD", "IAH", "ICT", "IDA", "ILM", "IND", "ISP", "ITO", "JAC", "JAN", "JAX", "JFK", "JLN", "JNU", "KOA", "LAS", "LAX", "LBB", "LCH", "LEX", "LGA", "LGB", "LIH", "LIT", "LNK", "LRD", "MAF", "MCI", "MCO", "MDT", "MDW", "MEI", "MEM", "MFE", "MFR", "MGM", "MHT", "MIA", "MKE", "MLB", "MLI", "MOB", "MOT", "MQT", "MSN", "MSO", "MSP", "MSY", "MTJ", "MYR", "OAJ", "OAK", "OGG", "OKC", "OMA", "ONT", "ORD", "ORF", "ORH", "PAE", "PBI", "PDX", "PHL", "PHX", "PIA", "PIT", "PNS", "PSC", "PSP", "PVD", "PVU", "PWM", "RAP", "RDD", "RDM", "RDU", "RIC", "RNO", "ROA", "ROC", "RST", "RSW", "SAF", "SAN", "SAT", "SAV", "SBA", "SBN", "SDF", "SEA", "SFO", "SGF", "SHV", "SJC", "SJU", "SLC", "SMF", "SNA", "SRQ", "STL", "STS", "STT", "SUN", "SUX", "SWF", "SYR", "TLH", "TPA", "TUL", "TUS", "TVC", "TWF", "TYS", "VPS", "XNA", "YUM"]};
+    
+    let selectedAirline = null;
+    let ccCheckboxState = {};
+
     // ===== LEGEND: Airport Categories =====
     const LEGEND = {
         ne_smalls: new Set('ROC,BUF,ALB,ISP,HPN,SYR,SWF,IAG,ORH,PVD,PWM,BTV,MHT,PSM,ABE,MDT,ROA,ORF,LYH,RIC,CHO'.split(',')),
@@ -806,6 +859,7 @@
         buildCppRouteInputs();
         document.getElementById('downloadBtn').disabled = false;
         document.getElementById('reverseBtn').disabled = false;
+        document.getElementById('ccSection').style.display = 'block';
         showStatus('Processed ' + processedData.length + ' routes from CSV successfully!', 'success');
     }
     
@@ -881,6 +935,7 @@
         buildCppRouteInputs();
         document.getElementById('downloadBtn').disabled = false;
         document.getElementById('reverseBtn').disabled = false;
+        document.getElementById('ccSection').style.display = 'block';
         showStatus('Processed ' + processedData.length + ' routes successfully!', 'success');
     }
     
@@ -1055,6 +1110,8 @@
         document.getElementById('analyticsSection').style.display = 'none';
         document.getElementById('statsBar').style.display = 'none';
         document.getElementById('cppSection').style.display = 'none';
+        document.getElementById('ccSection').style.display = 'none';
+        selectedAirline = null; ccCheckboxState = {};
         document.getElementById('downloadBtn').disabled = true;
         document.getElementById('reverseBtn').disabled = true;
         processedData = null; routeAnalytics = {}; excludedRoutes.clear(); routeNormPrices = {}; routeCPPValues = {};
@@ -1095,6 +1152,214 @@
         showStatus('CSV file "' + filename + '" downloaded with ' + filteredData.length + ' route(s)', 'success');
     }
     
+
+    // ===== CONNECTING CITIES FUNCTIONS =====
+    function selectAirline(airline) {
+        selectedAirline = airline;
+        document.querySelectorAll('.cc-airline-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.textContent === airline);
+        });
+        buildConnectingGrid();
+    }
+    
+    function buildConnectingGrid() {
+        if (!selectedAirline || !processedData || processedData.length === 0) return;
+        
+        const container = document.getElementById('ccGridContainer');
+        const airlinePorts = AIRLINE_ROUTES[selectedAirline] || [];
+        
+        // Get departure airports from processed data (excluding excluded routes)
+        const departureAirports = [];
+        processedData.forEach(row => {
+            const routeKey = row.From + '-' + row.To;
+            if (!excludedRoutes.has(routeKey) && !departureAirports.includes(row.From)) {
+                departureAirports.push(row.From);
+            }
+        });
+        
+        // Filter airline airports: must be in airline list AND not already a departure airport
+        const connectingAirports = airlinePorts.filter(ap => !departureAirports.includes(ap));
+        
+        if (connectingAirports.length === 0) {
+            container.innerHTML = '<div style="padding:20px;text-align:center;color:#601124;">No connecting airports found for ' + selectedAirline + '</div>';
+            container.style.display = 'block';
+            document.getElementById('ccActions').style.display = 'none';
+            return;
+        }
+        
+        // Initialize checkbox state if needed
+        if (!ccCheckboxState[selectedAirline]) ccCheckboxState[selectedAirline] = {};
+        
+        // Build grid: rows = connecting airports, columns = departure airports
+        let html = '<table class="cc-grid"><thead><tr><th class="cc-route-header">Airport</th>';
+        departureAirports.forEach(dep => {
+            html += '<th class="cc-airport-header">' + dep + '<br><span class="cc-select-all" onclick="toggleColumn(\'' + dep + '\')">(all)</span></th>';
+        });
+        html += '</tr></thead><tbody>';
+        
+        connectingAirports.forEach(ap => {
+            html += '<tr><td>' + ap + '</td>';
+            departureAirports.forEach(dep => {
+                const key = ap + '-' + dep;
+                const checked = ccCheckboxState[selectedAirline][key] ? ' checked' : '';
+                html += '<td><input type="checkbox" id="cc-' + key + '"' + checked + ' onchange="updateCCState(\'' + key + '\', this.checked)"></td>';
+            });
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table>';
+        container.innerHTML = html;
+        container.style.display = 'block';
+        document.getElementById('ccActions').style.display = 'flex';
+        document.getElementById('automationPanel').style.display = 'block';
+    }
+    
+    function updateCCState(key, checked) {
+        if (!selectedAirline) return;
+        if (!ccCheckboxState[selectedAirline]) ccCheckboxState[selectedAirline] = {};
+        ccCheckboxState[selectedAirline][key] = checked;
+    }
+    
+    function toggleColumn(dep) {
+        if (!selectedAirline || !ccCheckboxState[selectedAirline]) return;
+        const airlinePorts = AIRLINE_ROUTES[selectedAirline] || [];
+        const departureAirports = [];
+        processedData.forEach(row => {
+            const routeKey = row.From + '-' + row.To;
+            if (!excludedRoutes.has(routeKey) && !departureAirports.includes(row.From)) departureAirports.push(row.From);
+        });
+        const connectingAirports = airlinePorts.filter(ap => !departureAirports.includes(ap));
+        
+        // Check if all are currently checked
+        let allChecked = true;
+        connectingAirports.forEach(ap => {
+            const key = ap + '-' + dep;
+            if (!ccCheckboxState[selectedAirline][key]) allChecked = false;
+        });
+        
+        // Toggle all
+        connectingAirports.forEach(ap => {
+            const key = ap + '-' + dep;
+            const newVal = !allChecked;
+            ccCheckboxState[selectedAirline][key] = newVal;
+            const cb = document.getElementById('cc-' + key);
+            if (cb) cb.checked = newVal;
+        });
+    }
+    
+    function getCheckedConnecting() {
+        // Returns { departureAirport: [connectingAirport1, connectingAirport2, ...] }
+        if (!selectedAirline || !ccCheckboxState[selectedAirline]) return {};
+        const result = {};
+        Object.entries(ccCheckboxState[selectedAirline]).forEach(([key, checked]) => {
+            if (!checked) return;
+            const parts = key.split('-');
+            const connectingAp = parts[0];
+            const depAp = parts[1];
+            if (!result[depAp]) result[depAp] = [];
+            result[depAp].push(connectingAp);
+        });
+        // Sort each list
+        Object.keys(result).forEach(k => result[k].sort());
+        return result;
+    }
+    
+    function addConnectingToAltOrigins() {
+        if (!processedData) { showStatus('No data to update', 'error'); return; }
+        const connecting = getCheckedConnecting();
+        if (Object.keys(connecting).length === 0) { showStatus('No connecting cities selected', 'error'); return; }
+        
+        let updated = 0;
+        processedData.forEach(row => {
+            const depAirport = row.From;
+            if (connecting[depAirport]) {
+                const newCities = connecting[depAirport].map(c => c.toLowerCase()).join(',');
+                const existing = (row['Alt Origins'] || '').trim();
+                if (existing) {
+                    // Merge without duplicates
+                    const existingSet = new Set(existing.split(',').map(s => s.trim().toLowerCase()));
+                    connecting[depAirport].forEach(c => existingSet.add(c.toLowerCase()));
+                    row['Alt Origins'] = Array.from(existingSet).sort().join(',');
+                } else {
+                    row['Alt Origins'] = newCities;
+                }
+                updated++;
+            }
+        });
+        
+        displayPreview();
+        showStatus('Added connecting cities to Alt Origins for ' + updated + ' route(s)', 'success');
+    }
+    
+    function downloadConnectingCSV() {
+        if (!processedData) { showStatus('No data to download', 'error'); return; }
+        const connecting = getCheckedConnecting();
+        if (Object.keys(connecting).length === 0) { showStatus('No connecting cities selected', 'error'); return; }
+        
+        const columns = ['To', 'From', 'Alt Origins'];
+        templateColumns.forEach(month => { columns.push(month + ' D'); columns.push(month + ' R'); });
+        
+        let csv = columns.join(',') + '\n';
+        
+        processedData.forEach(row => {
+            const routeKey = row.From + '-' + row.To;
+            if (excludedRoutes.has(routeKey)) return;
+            const depAirport = row.From;
+            const cities = connecting[depAirport] || [];
+            
+            cities.forEach(connectCity => {
+                const rowData = columns.map(col => {
+                    if (col === 'From') return connectCity;
+                    else if (col === 'Alt Origins') return '';
+                    else { 
+                        let value = row[col] || '';
+                        if (value.toString().includes(',') || value.toString().includes('"')) return '"' + value.toString().replace(/"/g, '""') + '"';
+                        return value;
+                    }
+                });
+                csv += rowData.join(',') + '\n';
+            });
+        });
+        
+        const filteredData = processedData.filter(row => !excludedRoutes.has(row.From + '-' + row.To));
+        const filenameAirport = filteredData.length > 0 ? (filteredData[0].To || 'export') : 'export';
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        const today = new Date();
+        const dateStr = String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0') + today.getFullYear();
+        const filename = filenameAirport + '_Connecting_' + dateStr + '.csv';
+        link.setAttribute('href', url); link.setAttribute('download', filename); link.style.display = 'none';
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        showStatus('Downloaded connecting cities CSV: ' + filename, 'success');
+    }
+    
+    function downloadEmptyGridCSV() {
+        if (!selectedAirline || !processedData) { showStatus('Select an airline first', 'error'); return; }
+        const airlinePorts = AIRLINE_ROUTES[selectedAirline] || [];
+        const departureAirports = [];
+        processedData.forEach(row => {
+            const routeKey = row.From + '-' + row.To;
+            if (!excludedRoutes.has(routeKey) && !departureAirports.includes(row.From)) departureAirports.push(row.From);
+        });
+        const connectingAirports = airlinePorts.filter(ap => !departureAirports.includes(ap));
+        
+        let csv = 'Airport,' + departureAirports.join(',') + '\n';
+        connectingAirports.forEach(ap => {
+            csv += ap + ',' + departureAirports.map(() => '').join(',') + '\n';
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        const today = new Date();
+        const dateStr = String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0') + today.getFullYear();
+        const filename = selectedAirline.toLowerCase() + '_grid_' + dateStr + '.csv';
+        link.setAttribute('href', url); link.setAttribute('download', filename); link.style.display = 'none';
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        showStatus('Downloaded empty grid: ' + filename, 'success');
+    }
+    
     function formatPointsInput(el) {
         const cursorPos = el.selectionStart;
         const oldLen = el.value.length;
@@ -1128,6 +1393,123 @@
         bar.innerHTML = '<div class="price-status loaded">✅ Pricing data loaded: ' + domesticCount + ' domestic origins, ' + intlCount + ' international destination groups</div>';
         setTimeout(() => { bar.innerHTML = ''; }, 5000);
     })();
+
+    // ===== PLAYWRIGHT AUTOMATION API =====
+    // These functions are called by the Playwright script via page.evaluate()
+
+    window.playwrightAPI = {
+        // Get the current state: selected airline, connecting airports, departure cities
+        getGridState: function() {
+            if (!selectedAirline || !processedData || processedData.length === 0) {
+                return { error: 'No airline selected or no data processed. Select an airline in the Connecting Cities section first.' };
+            }
+            const airlinePorts = AIRLINE_ROUTES[selectedAirline] || [];
+            const departureAirports = [];
+            processedData.forEach(row => {
+                const routeKey = row.From + '-' + row.To;
+                if (!excludedRoutes.has(routeKey) && !departureAirports.includes(row.From)) {
+                    departureAirports.push(row.From);
+                }
+            });
+            const connectingAirports = airlinePorts.filter(ap => !departureAirports.includes(ap));
+            // Get destination from processed data
+            const destination = processedData.length > 0 ? processedData[0].To : '';
+            return {
+                airline: selectedAirline,
+                destination: destination,
+                departureAirports: departureAirports,
+                connectingAirports: connectingAirports,
+                totalConnecting: connectingAirports.length
+            };
+        },
+
+        // Check a specific box in the CC grid
+        checkBox: function(connectingAirport, departureAirport) {
+            const key = connectingAirport + '-' + departureAirport;
+            const cb = document.getElementById('cc-' + key);
+            if (cb) {
+                cb.checked = true;
+                updateCCState(key, true);
+                return { success: true, key: key };
+            }
+            return { error: 'Checkbox not found: ' + key };
+        },
+
+        // Uncheck a specific box
+        uncheckBox: function(connectingAirport, departureAirport) {
+            const key = connectingAirport + '-' + departureAirport;
+            const cb = document.getElementById('cc-' + key);
+            if (cb) {
+                cb.checked = false;
+                updateCCState(key, false);
+                return { success: true, key: key };
+            }
+            return { error: 'Checkbox not found: ' + key };
+        },
+
+        // Get current checkbox state for a connecting airport
+        getRowState: function(connectingAirport) {
+            if (!selectedAirline) return { error: 'No airline selected' };
+            const state = ccCheckboxState[selectedAirline] || {};
+            const result = {};
+            Object.entries(state).forEach(([key, checked]) => {
+                if (key.startsWith(connectingAirport + '-')) {
+                    const dep = key.split('-')[1];
+                    result[dep] = checked;
+                }
+            });
+            return result;
+        },
+
+        // Log a status message to the automation log in the UI
+        logStatus: function(airport, message, type) {
+            const logEl = document.getElementById('automationLog');
+            if (!logEl) return;
+            const time = new Date().toLocaleTimeString();
+            const typeColors = { info: '#483CFF', success: '#004449', warning: '#FF592C', error: '#DC2626', skip: '#601124' };
+            const color = typeColors[type] || '#004449';
+            const icons = { info: '🔍', success: '✅', warning: '⚠️', error: '❌', skip: '⏭️', search: '🔎', check: '☑️' };
+            const icon = icons[type] || 'ℹ️';
+            const entry = document.createElement('div');
+            entry.style.cssText = 'padding:4px 8px;font-size:12px;font-family:SF Mono,Monaco,monospace;border-bottom:1px solid rgba(0,68,73,0.06);';
+            entry.innerHTML = '<span style="color:#9CA3AF;">' + time + '</span> ' +
+                icon + ' <span style="font-weight:600;color:' + color + ';">' + (airport || '') + '</span> ' +
+                '<span style="color:#374151;">' + message + '</span>';
+            logEl.insertBefore(entry, logEl.firstChild);
+            // Keep only last 200 entries
+            while (logEl.children.length > 200) logEl.removeChild(logEl.lastChild);
+            // Update progress
+            const progressEl = document.getElementById('automationProgress');
+            if (progressEl && window._automationTotal) {
+                window._automationProcessed = (window._automationProcessed || 0) + (type === 'success' || type === 'skip' ? 1 : 0);
+                const pct = Math.round((window._automationProcessed / window._automationTotal) * 100);
+                progressEl.innerHTML = '<div style="background:rgba(0,68,73,0.1);border-radius:6px;height:8px;overflow:hidden;margin-bottom:8px;">' +
+                    '<div style="background:#483CFF;height:100%;width:' + pct + '%;transition:width 0.3s;border-radius:6px;"></div></div>' +
+                    '<span style="font-size:12px;color:#601124;">' + window._automationProcessed + ' / ' + window._automationTotal + ' airports processed</span>';
+            }
+        },
+
+        // Initialize the progress tracker
+        initProgress: function(total) {
+            window._automationTotal = total;
+            window._automationProcessed = 0;
+            const progressEl = document.getElementById('automationProgress');
+            if (progressEl) {
+                progressEl.innerHTML = '<div style="background:rgba(0,68,73,0.1);border-radius:6px;height:8px;overflow:hidden;margin-bottom:8px;">' +
+                    '<div style="background:#483CFF;height:100%;width:0%;transition:width 0.3s;border-radius:6px;"></div></div>' +
+                    '<span style="font-size:12px;color:#601124;">0 / ' + total + ' airports to process</span>';
+            }
+        },
+
+        // Mark automation as complete
+        markComplete: function(summary) {
+            const statusEl = document.getElementById('automationStatus');
+            if (statusEl) {
+                statusEl.innerHTML = '<div style="padding:12px 16px;background:rgba(11,255,128,0.1);border:1px solid rgba(11,255,128,0.3);border-radius:8px;color:#004449;font-weight:500;">' +
+                    '✅ Automation complete! ' + summary + '</div>';
+            }
+        }
+    };
     </script>
 </body>
 </html>
