@@ -19,10 +19,9 @@
         .stat-item { text-align: center; }
         .stat-value { font-size: 2em; font-weight: 700; color: #004449; }
         .stat-label { color: #601124; font-size: 0.9em; margin-top: 5px; }
-        .input-mode-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 12px; overflow: hidden; border: 2px solid rgba(0, 68, 73, 0.2); width: fit-content; }
-        .input-mode-tab { padding: 12px 24px; border: none; background: #FFFBED; color: #601124; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.95em; display: flex; align-items: center; gap: 8px; }
-        .input-mode-tab:not(:last-child) { border-right: 1px solid rgba(0, 68, 73, 0.2); }
-        .input-mode-tab.active { background: #004449; color: #FFFBED; }
+        .input-mode-tabs { display: flex; gap: 10px; margin-bottom: 20px; width: fit-content; }
+        .input-mode-tab { padding: 12px 24px; border: 2px solid #601124; border-radius: 100px; background: #FFFBED; color: #004449; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.95em; display: flex; align-items: center; gap: 8px; }
+        .input-mode-tab.active { background: #FFA97F; color: #FFFBED; border-color: #FFA97F; }
         .input-mode-tab:hover:not(.active) { background: rgba(0, 68, 73, 0.08); }
         .text-input-area { margin-bottom: 30px; }
         .section-title { color: #004449; margin-bottom: 15px; font-size: 1.3em; font-weight: 600; display: flex; align-items: center; gap: 10px; }
@@ -46,32 +45,36 @@
         .uploaded-file-remove { background: none; border: none; color: #601124; cursor: pointer; padding: 5px; font-size: 1.2em; transition: color 0.2s; }
         .uploaded-file-remove:hover { color: #DC2626; }
         .button-group { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
-        button { padding: 14px 32px; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 1em; display: flex; align-items: center; gap: 8px; }
-        .process-btn { background: #004449; color: #FFFBED; flex: 1; justify-content: center; }
-        .process-btn:hover { background: #003336; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0, 68, 73, 0.3); }
-        .reverse-btn { background: #FF592C; color: white; }
-        .reverse-btn:hover:not(:disabled) { background: #E04420; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(255, 89, 44, 0.3); }
-        .download-btn { background: #0BFF80; color: #004449; }
-        .download-btn:hover:not(:disabled) { background: #00E070; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(11, 255, 128, 0.3); }
-        .clear-btn { background: #601124; color: #FFFBED; }
-        .clear-btn:hover { background: #4a0d1c; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(96, 17, 36, 0.3); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+        button { padding: 14px 32px; border: none; border-radius: 100px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 1em; display: flex; align-items: center; gap: 8px; }
+        .process-btn { background: #483CFF; color: #FFFFFF; flex: 1; justify-content: center; }
+        .process-btn:hover { background: #3a30cc; }
+        .process-btn:active { background: #2e26a3; }
+        .reverse-btn { background: #FFD3B6; color: #004449; }
+        .reverse-btn:hover:not(:disabled) { background: #FFC49A; }
+        .reverse-btn:active:not(:disabled) { background: #FFA97F; }
+        .download-btn { background: #D4FFBF; color: #004449; }
+        .download-btn:hover:not(:disabled) { background: #b8f5a0; }
+        .download-btn:active:not(:disabled) { background: #9ae882; }
+        .clear-btn { background: transparent; color: #004449; border: 2px solid #004449; }
+        .clear-btn:hover { background: rgba(0, 68, 73, 0.06); }
+        .clear-btn:active { background: rgba(0, 68, 73, 0.12); }
+        button:disabled { opacity: 0.4; cursor: not-allowed; }
         
         /* CPP Section */
         .cpp-section { margin: 30px 0; padding: 24px; background: rgba(72, 60, 255, 0.04); border-radius: 12px; border: 1px solid rgba(72, 60, 255, 0.15); display: none; }
         .cpp-title { font-size: 1.3em; font-weight: 600; color: #004449; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .cpp-mode-toggle { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 2px solid rgba(0, 68, 73, 0.2); width: fit-content; margin-bottom: 20px; }
-        .cpp-mode-btn { padding: 10px 20px; border: none; background: #FFFBED; color: #601124; font-weight: 600; cursor: pointer; transition: all 0.3s ease; font-size: 0.9em; }
-        .cpp-mode-btn:first-child { border-right: 1px solid rgba(0, 68, 73, 0.2); }
-        .cpp-mode-btn.active { background: #483CFF; color: white; }
-        .cpp-mode-btn:hover:not(.active) { background: rgba(72, 60, 255, 0.08); }
+        .cpp-mode-toggle { display: flex; gap: 10px; width: fit-content; margin-bottom: 20px; }
+        .cpp-mode-btn { padding: 10px 20px; border: 2px solid #601124; border-radius: 100px; background: #FFFBED; color: #004449; font-weight: 600; cursor: pointer; transition: all 0.2s ease; font-size: 0.9em; }
+        .cpp-mode-btn:first-child { border-right: 2px solid #601124; }
+        .cpp-mode-btn.active { background: #FFA97F; color: #FFFBED; border-color: #FFA97F; }
+        .cpp-mode-btn:hover:not(.active) { background: rgba(0, 68, 73, 0.08); }
         .cpp-global-inputs { display: flex; gap: 20px; align-items: end; flex-wrap: wrap; margin-bottom: 15px; }
         .cpp-input-group { display: flex; flex-direction: column; gap: 6px; }
         .cpp-input-group label { font-size: 0.85em; font-weight: 600; color: #004449; }
         .cpp-input-group input { padding: 10px 14px; border: 2px solid rgba(0, 68, 73, 0.2); border-radius: 8px; font-size: 1em; width: 160px; transition: border-color 0.3s; background: #FFFFFF; }
         .cpp-input-group input:focus { outline: none; border-color: #483CFF; }
-        .cpp-calc-btn { padding: 10px 24px; background: #483CFF; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; align-self: end; }
-        .cpp-calc-btn:hover { background: #3a30cc; transform: translateY(-1px); }
+        .cpp-calc-btn { padding: 10px 24px; background: #483CFF; color: #FFFFFF; border: none; border-radius: 100px; font-weight: 600; cursor: pointer; transition: all 0.2s; align-self: end; }
+        .cpp-calc-btn:hover { background: #3a30cc; }
         .cpp-route-inputs { display: grid; gap: 12px; margin-top: 15px; max-height: 400px; overflow-y: auto; }
         .cpp-route-row { display: grid; grid-template-columns: 140px 1fr 1fr 1fr 1fr; gap: 12px; align-items: center; padding: 12px; background: #FFFFFF; border-radius: 8px; border: 1px solid rgba(0, 68, 73, 0.15); }
         .cpp-route-row .route-label { font-weight: 600; font-family: 'SF Mono', 'Monaco', monospace; color: #004449; font-size: 0.95em; }
