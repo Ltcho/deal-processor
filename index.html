@@ -856,8 +856,9 @@
                     }
                     return;
                 }
-                const rawVal = (row[header] || '').toString().replace(/,/g, '').trim();
-                const v = parseFloat(rawVal);
+                const rawStr = (row[header] || '').toString().replace(/,/g, '').replace(/\$/g, '').trim();
+                const kMatch = rawStr.match(/^([\d.]+)\s*[kK]$/);
+                const v = kMatch ? parseFloat(kMatch[1]) * 1000 : parseFloat(rawStr);
                 if (isNaN(v) || v === 0) return;
                 if (pointsToPattern.test(header) || pointsFromPattern.test(header)) {
                     rowPoints += v; foundCPP = true;
