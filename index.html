@@ -827,10 +827,11 @@
         
         processedData = []; routeAnalytics = {}; routePrefilledCPP = {};
         const monthColumnPattern = /^([A-Za-z]+\s+\d{4})\s+([DR])$/;
-        const pointsToPattern = /^Points\s*\(To\s*"([^"]+)"\)$/i;
-        const pointsFromPattern = /^Points\s*\(From\s*"([^"]+)"\)$/i;
-        const taxesToPattern = /^Taxes\s*\(To\s*"([^"]+)"\)$/i;
-        const taxesFromPattern = /^Taxes\s*\(From\s*"([^"]+)"\)$/i;
+        // Match Points/Taxes columns with any quote style or no quotes, any airport code
+        const pointsToPattern = /^Points\s*\(\s*To\s*/i;
+        const pointsFromPattern = /^Points\s*\(\s*From\s*/i;
+        const taxesToPattern = /^Taxes\s*\(\s*To\s*/i;
+        const taxesFromPattern = /^Taxes\s*\(\s*From\s*/i;
 
         rows.forEach(row => {
             const toAirport = (row['To'] || '').trim();
@@ -855,19 +856,13 @@
                     }
                     return;
                 }
-                const mPTo = header.match(pointsToPattern);
-                const mPFrom = header.match(pointsFromPattern);
-                const mTTo = header.match(taxesToPattern);
-                const mTFrom = header.match(taxesFromPattern);
                 const rawVal = (row[header] || '').toString().replace(/,/g, '').trim();
-                if (mPTo && mPTo[1].toUpperCase() === toAirport) {
-                    const v = parseFloat(rawVal); if (!isNaN(v)) { rowPoints += v; foundCPP = true; }
-                } else if (mPFrom && mPFrom[1].toUpperCase() === toAirport) {
-                    const v = parseFloat(rawVal); if (!isNaN(v)) { rowPoints += v; foundCPP = true; }
-                } else if (mTTo && mTTo[1].toUpperCase() === toAirport) {
-                    const v = parseFloat(rawVal); if (!isNaN(v)) { rowTaxes += v; foundCPP = true; }
-                } else if (mTFrom && mTFrom[1].toUpperCase() === toAirport) {
-                    const v = parseFloat(rawVal); if (!isNaN(v)) { rowTaxes += v; foundCPP = true; }
+                const v = parseFloat(rawVal);
+                if (isNaN(v) || v === 0) return;
+                if (pointsToPattern.test(header) || pointsFromPattern.test(header)) {
+                    rowPoints += v; foundCPP = true;
+                } else if (taxesToPattern.test(header) || taxesFromPattern.test(header)) {
+                    rowTaxes += v; foundCPP = true;
                 }
             });
             if (foundCPP) routePrefilledCPP[routeKey] = { points: rowPoints, taxes: rowTaxes };
