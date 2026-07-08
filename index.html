@@ -676,6 +676,49 @@
         return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][monthNum - 1];
     }
     
+    function parseSlashDateFormat(datesStr, routeKey, routeData, isDeparture) {
+        const monthGroups = {};
+        datesStr.split(',').forEach(entry => {
+            entry = entry.trim();
+            const rm = entry.match(/^(\d{1,2})\/(\d{1,2})-(\d{1,2})\/(\d{1,2})$/);
+            const sm = entry.match(/^(\d{1,2})\/(\d{1,2})$/);
+            if (rm) {
+                const m1 = +rm[1], d1 = +rm[2], m2 = +rm[3], d2 = +rm[4];
+                if (!monthGroups[m1]) monthGroups[m1] = [];
+                if (!monthGroups[m2]) monthGroups[m2] = [];
+                if (m1 === m2) {
+                    for (let d = d1; d <= d2; d++) monthGroups[m1].push(d);
+                } else {
+                    const daysInM1 = new Date(getYearForMonth(m1), m1, 0).getDate();
+                    for (let d = d1; d <= daysInM1; d++) monthGroups[m1].push(d);
+                    for (let d = 1; d <= d2; d++) monthGroups[m2].push(d);
+                }
+            } else if (sm) {
+                const m = +sm[1], d = +sm[2];
+                if (!monthGroups[m]) monthGroups[m] = [];
+                monthGroups[m].push(d);
+            }
+        });
+        Object.entries(monthGroups).forEach(([mStr, days]) => {
+            const mn = parseInt(mStr);
+            const year = getYearForMonth(mn);
+            const monthYear = getMonthName(mn) + ' ' + year;
+            const uniqueDays = [...new Set(days)].sort((a, b) => a - b);
+            const colName = monthYear + (isDeparture ? ' D' : ' R');
+            const dStr = uniqueDays.join(', ');
+            if (routeData[colName]) routeData[colName] += ', ' + dStr; else routeData[colName] = dStr;
+            if (isDeparture) {
+                if (!routeAnalytics[routeKey].departures[monthYear]) routeAnalytics[routeKey].departures[monthYear] = [];
+                routeAnalytics[routeKey].departures[monthYear].push(...uniqueDays);
+                routeAnalytics[routeKey].totalDepartures += uniqueDays.length;
+            } else {
+                if (!routeAnalytics[routeKey].returns[monthYear]) routeAnalytics[routeKey].returns[monthYear] = [];
+                routeAnalytics[routeKey].returns[monthYear].push(...uniqueDays);
+                routeAnalytics[routeKey].totalReturns += uniqueDays.length;
+            }
+        });
+    }
+
     function parseRouteDates(dateStr) {
         const dates = [];
         if (!dateStr || typeof dateStr !== 'string') return dates;
@@ -921,6 +964,9 @@
             }
             if (!routeAnalytics[routeKey]) routeAnalytics[routeKey] = { departures: {}, returns: {}, totalDepartures: 0, totalReturns: 0, sets: 0 };
             
+            if (/^\d{1,2}\/\d{1,2}/.test(datesStr.trim())) {
+                parseSlashDateFormat(datesStr, routeKey, routeMap.get(routeKey), isDeparture);
+            } else {
             const parts = datesStr.split(/[;,]\s*(?=(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|June|July|August|September|October|November|December)\.?\s+\d)/i);
             parts.forEach(group => {
                 group = group.trim(); if (!group) return;
@@ -947,6 +993,7 @@
                     routeAnalytics[routeKey].totalReturns += parsedDates.length;
                 }
             });
+            }
         });
         
         processedData = Array.from(routeMap.values());
