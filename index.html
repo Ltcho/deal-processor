@@ -203,6 +203,7 @@
                 <li>Routes highlighted in red have low availability (&lt; 20 dates for any metric), with darker red for critically low counts (&lt; 10)</li>
                 <li>Uncheck the "Include" box to remove the city from downloaded sheet</li>
                 <li><strong>CPP:</strong> After processing, enter points &amp; taxes to calculate cents per point</li>
+                <li>Add points to a route with <code>(7.3k pts)</code> after the airport codes — departure &amp; return legs are summed into roundtrip points and auto-filled into the CPP calculator</li>
                 <li>Remember to ALWAYS manually validate the dates</li>
             </ul>
             <div class="example-format">
@@ -210,7 +211,10 @@
                 IAD-DUB: Nov. 11-12, 15, 17-18; Dec. 2, 9, 12<br>
                 DUB-IAD: Nov. 13, 19-26; Dec. 3-6, 8, 10<br>
                 SEA-HKG: Jun. 1-5, 10, 15-20<br>
-                HKG-SEA: Jun. 7-9, 12, 22-25
+                HKG-SEA: Jun. 7-9, 12, 22-25<br>
+                <br>
+                TPA-NAS (7.3k pts): Sep. 6-9, 13<br>
+                NAS-TPA (8k pts): Jul. 18; Aug. 19, 21-22
             </div>
             </div>
         </details>
@@ -773,7 +777,7 @@
             const existingTax = document.getElementById('tax-' + routeKey);
             const prefilled = routePrefilledCPP[routeKey];
             const prefilledPts = prefilled ? Math.round(prefilled.points).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
-            const prefilledTax = prefilled ? prefilled.taxes.toFixed(2) : '';
+            const prefilledTax = prefilled && prefilled.taxes !== undefined ? prefilled.taxes.toFixed(2) : '';
             const ptsVal = (existingPts && existingPts.value) ? existingPts.value : (prefilledPts || globalPts);
             const taxVal = (existingTax && existingTax.value) ? existingTax.value : (prefilledTax || globalTax);
             
@@ -935,16 +939,17 @@
         const routeText = document.getElementById('routeData').value;
         if (!routeText.trim()) { showStatus('Please enter route data to process', 'error'); return; }
         
-        processedData = []; routeAnalytics = {};
+        processedData = []; routeAnalytics = {}; routePrefilledCPP = {};
         const routeMap = new Map();
+        const textPointsByRoute = {};
         const lines = routeText.split('\n');
-        
+
         lines.forEach(line => {
             line = line.trim().replace(/^[\s*\-•·◦▪▸►>\d.)\]]+\s*/, '');
             if (!line) return;
-            const routeMatch = line.match(/^([A-Z]{3})-([A-Z]{3}):\s*(.+)$/i);
+            const routeMatch = line.match(/^([A-Z]{3})-([A-Z]{3})\s*(?:\(([^)]*)\))?\s*:\s*(.+)$/i);
             if (!routeMatch) return;
-            const [_, from, to, datesStr] = routeMatch;
+            const [_, from, to, ptsAnnotation, datesStr] = routeMatch;
             const fromUpper = from.toUpperCase(); const toUpper = to.toUpperCase();
             const fromIsUS = usAirports.includes(fromUpper); const toIsUS = usAirports.includes(toUpper);
             
@@ -956,14 +961,17 @@
                 if (routeMap.has(rk)) { toAirport = toUpper; fromAirport = fromUpper; routeKey = rk; isDeparture = false; }
                 else { toAirport = toUpper; fromAirport = fromUpper; routeKey = fk; isDeparture = true; }
             } else return;
-            
+
             if (!routeMap.has(routeKey)) {
                 const newRoute = { 'To': toAirport, 'From': fromAirport, 'Alt Origins': '' };
                 templateColumns.forEach(col => { newRoute[col + ' D'] = ''; newRoute[col + ' R'] = ''; });
                 routeMap.set(routeKey, newRoute);
             }
             if (!routeAnalytics[routeKey]) routeAnalytics[routeKey] = { departures: {}, returns: {}, totalDepartures: 0, totalReturns: 0, sets: 0 };
-            
+
+            const legPoints = parsePointsAnnotation(ptsAnnotation);
+            if (legPoints) textPointsByRoute[routeKey] = (textPointsByRoute[routeKey] || 0) + legPoints;
+
             if (/^\d{1,2}\/\d{1,2}/.test(datesStr.trim())) {
                 parseSlashDateFormat(datesStr, routeKey, routeMap.get(routeKey), isDeparture);
             } else {
@@ -999,12 +1007,18 @@
         processedData = Array.from(routeMap.values());
         Object.keys(routeAnalytics).forEach(route => { routeAnalytics[route].sets = findValidSets(routeAnalytics[route].departures, routeAnalytics[route].returns); });
         if (processedData.length === 0) { showStatus('No valid routes found.', 'error'); return; }
-        
+
+        Object.keys(textPointsByRoute).forEach(routeKey => { routePrefilledCPP[routeKey] = { points: textPointsByRoute[routeKey] }; });
+
         excludedRoutes.clear();
         lookupAllNormPrices();
         updateStats(); displayAnalytics(); displayPreview();
         document.getElementById('cppSection').style.display = 'block';
         buildCppRouteInputs();
+        if (Object.keys(routePrefilledCPP).length > 0) {
+            setCppMode('route');
+            calculateCPP();
+        }
         document.getElementById('downloadBtn').disabled = false;
         document.getElementById('reverseBtn').disabled = false;
         document.getElementById('ccSection').style.display = 'block';
@@ -1446,6 +1460,15 @@
     function parsePoints(val) {
         if (!val) return NaN;
         return parseFloat(val.toString().replace(/,/g, ''));
+    }
+
+    function parsePointsAnnotation(str) {
+        if (!str) return null;
+        const cleaned = str.replace(/,/g, '');
+        const kMatch = cleaned.match(/([\d.]+)\s*[kK]/);
+        if (kMatch) return parseFloat(kMatch[1]) * 1000;
+        const numMatch = cleaned.match(/([\d.]+)/);
+        return numMatch ? parseFloat(numMatch[1]) : null;
     }
     
     function showStatus(message, type) {
