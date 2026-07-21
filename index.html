@@ -1484,8 +1484,11 @@
 
     function parseTaxAnnotation(str) {
         if (!str) return null;
-        const match = str.match(/\$\s*([\d,]+\.?\d*)/);
-        return match ? parseFloat(match[1].replace(/,/g, '')) : null;
+        const match = str.match(/\$\s*([\d,]+\.?\d*)(?:\s*-\s*([\d,]+\.?\d*))?/);
+        if (!match) return null;
+        const low = parseFloat(match[1].replace(/,/g, ''));
+        const high = match[2] ? parseFloat(match[2].replace(/,/g, '')) : null;
+        return high !== null && high > low ? high : low;
     }
     
     function showStatus(message, type) {
