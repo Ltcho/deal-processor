@@ -1155,27 +1155,28 @@
         // Reverse each route: swap To/From and swap D/R columns
         const reversedData = [];
         const reversedAnalytics = {};
-        
+        const reversedPrefilledCPP = {};
+
         processedData.forEach(row => {
             const newRow = {};
             // Swap To and From
             newRow['To'] = row['From'];
             newRow['From'] = row['To'];
             newRow['Alt Origins'] = row['Alt Origins'] || '';
-            
+
             // Swap D and R for each month column
             templateColumns.forEach(month => {
                 newRow[month + ' D'] = row[month + ' R'] || '';
                 newRow[month + ' R'] = row[month + ' D'] || '';
             });
-            
+
             reversedData.push(newRow);
-            
+
             // Rebuild analytics for reversed route
             const oldRouteKey = row.From + '-' + row.To;
             const newRouteKey = newRow.From + '-' + newRow.To;
             const oldAnalytics = routeAnalytics[oldRouteKey];
-            
+
             if (oldAnalytics) {
                 reversedAnalytics[newRouteKey] = {
                     departures: Object.assign({}, oldAnalytics.returns),
@@ -1185,10 +1186,16 @@
                     sets: oldAnalytics.sets
                 };
             }
+
+            // Points/taxes are roundtrip totals, so they carry over under the new route key
+            if (routePrefilledCPP[oldRouteKey]) {
+                reversedPrefilledCPP[newRouteKey] = routePrefilledCPP[oldRouteKey];
+            }
         });
-        
+
         processedData = reversedData;
         routeAnalytics = reversedAnalytics;
+        routePrefilledCPP = reversedPrefilledCPP;
         excludedRoutes.clear();
         routeCPPValues = {};
         
