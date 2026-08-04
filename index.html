@@ -1205,6 +1205,10 @@
         displayPreview();
         document.getElementById('cppSection').style.display = 'block';
         buildCppRouteInputs();
+        if (Object.keys(routePrefilledCPP).length > 0) {
+            setCppMode('route');
+            calculateCPP();
+        }
         showStatus('Routes reversed! Departures and returns have been swapped.', 'success');
     }
     
